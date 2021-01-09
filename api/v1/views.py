@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from api.base.fields import PasswordField
 from users.models import User
+from users.services import create_user
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,6 +19,9 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'password',
         )
+
+    def create(self, validated_data):
+        return create_user(**validated_data)
 
 
 class UserViewSet(
