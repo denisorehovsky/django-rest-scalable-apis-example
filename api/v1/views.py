@@ -1,8 +1,9 @@
 from rest_framework.mixins import (
-    CreateModelMixin, DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
+    DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
 )
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from rest_framework import serializers
+from rest_framework import serializers, status
 
 from api.base.fields import PasswordField
 from users.models import User
@@ -24,8 +25,12 @@ class UserSerializer(serializers.ModelSerializer):
         return create_user(**validated_data)
 
 
+class UserCreateResponseSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    user = UserSerializer()
+
+
 class UserViewSet(
-    CreateModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
     DestroyModelMixin,
@@ -33,3 +38,16 @@ class UserViewSet(
 ):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def create(self, request, *args, **kwargs):
+        request_serializer = UserSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        request_serializer.save()
+
+        response_serializer = UserCreateResponseSerializer({
+            'token': 'randomusertoken',
+            'user': request_serializer.instance,
+        })
+        return Response(
+            response_serializer.data, status=status.HTTP_201_CREATED
+        )
