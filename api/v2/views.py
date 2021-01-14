@@ -1,8 +1,10 @@
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import serializers, status
 
 from api.base.fields import PasswordField
+from api.base.permissions import CurrentUserOrAdminUser
 from users.models import User
 from users.services import create_user, delete_user, update_user
 
@@ -27,6 +29,17 @@ class UserCreateResponseSerializer(serializers.Serializer):
 class UserViewSet(GenericViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            self.permission_classes = (AllowAny, )
+        elif self.action == 'update' or self.action == 'partial_update':
+            self.permission_classes = (CurrentUserOrAdminUser, )
+        elif self.action == 'retrieve':
+            self.permission_classes = (IsAuthenticated, )
+        elif self.action == 'destroy':
+            self.permission_classes = (CurrentUserOrAdminUser, )
+        return super().get_permissions()
 
     def create(self, request, *args, **kwargs):
         request_serializer = UserSerializer(data=request.data)

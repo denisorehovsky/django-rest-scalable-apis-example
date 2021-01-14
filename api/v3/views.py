@@ -2,9 +2,11 @@ from rest_batteries.mixins import (
     CreateModelMixin, DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
 )
 from rest_batteries.viewsets import GenericViewSet
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import serializers
 
 from api.base.fields import PasswordField
+from api.base.permissions import CurrentUserOrAdminUser
 from users.models import User
 from users.services import create_user, delete_user, update_user
 
@@ -42,6 +44,12 @@ class UserViewSet(
         'create': UserCreateResponseSerializer,
         'retrieve': UserSerializer,
         'update': UserSerializer,
+    }
+    action_permission_classes = {
+        'create': AllowAny,
+        'update': CurrentUserOrAdminUser,
+        'retrieve': IsAuthenticated,
+        'destroy': CurrentUserOrAdminUser,
     }
 
     def perform_create(self, serializer):
